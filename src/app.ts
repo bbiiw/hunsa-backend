@@ -2,7 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import EmployeeRoutes from './routes/EmployeeRoutes';
 import ServiceRoutes from './routes/ServiceRoutes';
-// import ReservationRoutes from './routes/ReservationRoutes';
+import ReservationRoutes from './routes/ReservationRoutes';
 
 const app: Application = express();
 
@@ -13,7 +13,7 @@ app.use(cors()); // frontend เรียกใช้ API ได้
 // Base Routes
 app.use('/api/employees', EmployeeRoutes);
 app.use('/api/services', ServiceRoutes);
-// app.use('/api/reservation', ReservationRoutes);
+app.use('/api/reservation', ReservationRoutes);
 
 // TEST API
 app.get('/api/', (req, res) => {
