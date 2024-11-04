@@ -1,18 +1,18 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 // กำหนดภูมิภาค (region)
-const sesClient = new SESClient({ region: "ap-southeast-1" });
+const sesClient = new SESClient({ region: 'ap-southeast-1' });
 
 // ฟังก์ชันสำหรับส่งอีเมลยืนยันการจองพร้อมลิงก์ยกเลิก
 export const sendEmail = async (reservation: any) => {
   const params = {
     Destination: {
-      ToAddresses: [reservation.customerEmail], // ส่งอีเมลไปยังลูกค้า
+      ToAddresses: [reservation.customerEmail],  // ส่งอีเมลไปยังลูกค้า
     },
     Message: {
       Body: {
         Html: {
-          Charset: "UTF-8",
+          Charset: 'UTF-8',
           Data: `
             <h1>ยืนยันการจองคิว</h1>
             <p>ชื่อ: ${reservation.customerName}</p>
@@ -24,11 +24,11 @@ export const sendEmail = async (reservation: any) => {
         },
       },
       Subject: {
-        Charset: "UTF-8",
-        Data: "ยืนยันการจองคิว",
+        Charset: 'UTF-8',
+        Data: 'ยืนยันการจองคิว',
       },
     },
-    Source: "your-verified-email@example.com", // อีเมลที่คุณยืนยันใน AWS SES
+    Source: 'your-verified-email@example.com',  // อีเมลที่คุณยืนยันใน AWS SES
   };
 
   // ส่งอีเมล
@@ -37,6 +37,6 @@ export const sendEmail = async (reservation: any) => {
     const response = await sesClient.send(command);
     console.log("Email sent:", response);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error sending email:', error);
   }
 };

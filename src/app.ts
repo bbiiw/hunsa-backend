@@ -1,8 +1,8 @@
-import express, { Application } from "express";
-import cors from "cors";
-import reservationRoutes from "./routes/reservationRoutes";
-import employeeRoutes from "./routes/employeeRoutes";
-import serviceRoutes from "./routes/serviceRoutes";
+import express, { Application } from 'express';
+import cors from 'cors';
+import EmployeeRoutes from './routes/EmployeeRoutes';
+import ServiceRoutes from './routes/ServiceRoutes';
+// import ReservationRoutes from './routes/ReservationRoutes';
 
 const app: Application = express();
 
@@ -11,8 +11,13 @@ app.use(express.json()); // รับส่งข้อมูลแบบ JSON
 app.use(cors()); // frontend เรียกใช้ API ได้
 
 // Base Routes
-app.use("/api/employees", employeeRoutes);
-app.use("/api/reservation", reservationRoutes);
-app.use("/api/services", serviceRoutes);
+app.use('/api/employees', EmployeeRoutes);
+app.use('/api/services', ServiceRoutes);
+// app.use('/api/reservation', ReservationRoutes);
+
+// TEST API
+app.get('/api/', (req, res) => {
+    res.send('Welcome to API BACKEND');
+});
 
 export default app;

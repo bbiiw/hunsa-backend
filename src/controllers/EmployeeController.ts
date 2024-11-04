@@ -1,169 +1,99 @@
-import { Request, Response } from "express";
-import Employee from "../models/Employee";
-import { getCurrentTime } from "../config/timezone";
+import { Request, Response } from 'express';
+import { registerEmployee, loginEmployee, changePassword, deleteEmployee, getAllEmployees, getEmployeeId, updateEmployeeInfo, updateEmployeeStatus } from '../services/EmployeeService';
 
-// ช่างลงทะเบียนสร้างบัญชีผู้ใช้
-export const registerEmployee = async (req: Request, res: Response) => {
+// เพิ่มช่าง
+export const registerResponseEmployee = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
 
   try {
-    const existingEmployee = await Employee.findOne({ email });
-
-    if (existingEmployee) {
-      return res.status(400).json({ message: "อีเมลนี้ถูกใช้แล้ว" });
-    }
-
-    const employee = new Employee({
-      username,
-      email,
-      password,
-      status: "available",
-      createAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
-    });
-
-    await employee.save();
-
-    res.status(201).json({
-      message: "สมัครสมาชิกสำเร็จ",
-      employee: {
-        username: employee.username,
-        email: employee.email,
-        description: employee.description,
-        imgSrc: employee.imgSrc,
-        status: employee.status,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการสมัครสมาชิก", error });
+    const employee = await registerEmployee(username, email, password);
+    res.status(201).json({ message: 'ลงทะเบียนสำเร็จ!', employee });
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลงทะเบียน', error: error.message });
   }
 };
 
-// ช่างเข้าสู่ระบบ
-export const loginEmployee = async (req: Request, res: Response) => {
+// เข้าสู่ระบบ
+export const loginResponseEmployee = async (req: Request, res: Response) => {
   const { email_username, password } = req.body;
+
   try {
-    const employee = await Employee.findOne({
-      $or: [{ email: email_username }, { username: email_username }],
-    });
-
-    if (!employee) {
-      return res
-        .status(400)
-        .json({ message: "ไม่พบอีเมลหรือชื่อผู้ใช้ในระบบ" });
-    }
-
-    if (employee.password !== password) {
-      return res.status(400).json({ message: "รหัสผ่านไม่ถูกต้อง" });
-    }
-
-    res.status(200).json({ message: "เข้าสู่ระบบสำเร็จ", employee });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" });
+    const employee = await loginEmployee(email_username, password);
+    res.status(200).json({ message: 'เข้าสู่ระบบสำเร็จ!', employee });
+  } catch (error: any) {
+    res.status(400).json({ message: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ', error: error.message });
   }
 };
 
-// แสดงข้อมูลช่างทุกคน
-export const getAllEmployees = async (req: Request, res: Response) => {
+// แสดงช่างทั้งหมด
+export const getResponseAllEmployees = async (req: Request, res: Response) => {
   try {
-    const employees = await Employee.find();
-
+    const employees = await getAllEmployees();
     res.status(200).json(employees);
-  } catch (error) {
-    // หากมีข้อผิดพลาด
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูล", error });
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูลช่าง', error: error.message });
   }
 };
 
-// ฟังก์ชันเปลี่ยนสถานะ 'ว่าง/ไม่ว่าง' ของช่าง
-export const updateEmployeeStatus = async (req: Request, res: Response) => {
-  try {
-    const { status } = req.body;
-    const employeeId = req.params.id;
-    const employee = await Employee.findById(employeeId);
-
-    if (!employee) {
-      return res.status(404).json({ message: "ไม่พบข้อมูลช่าง" });
-    }
-
-    employee.status = status;
-    await employee.save();
-
-    res.status(200).json({ message: "อัปเดตสถานะสำเร็จ", employee });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตสถานะ" });
-  }
-};
-
-// อัปเดตช่าง (ชื่อ,อีเมล,รูปโปรไฟล์)
-export const updateEmployee = async (req: Request, res: Response) => {
+// ดึงข้อมูลช่างตาม ID
+export const getResponseEmployeeId = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { username, email, description, imgSrc } = req.body;
 
   try {
-    const employee = await Employee.findById(id);
-
-    if (!employee) {
-      return res.status(404).json({ message: "ไม่พบข้อมูลช่าง" });
-    }
-
-    // ตรวจสอบว่ามีการอัปเดตอีเมล และอีเมลนี้ยังไม่ได้ใช้ในระบบ
-    if (email) {
-      const emailExists: any = await Employee.findOne({ email });
-
-      if (emailExists && emailExists._id.toString() !== id) {
-        return res.status(400).json({ message: "อีเมลนี้ถูกใช้แล้ว" });
-      }
-
-      employee.email = email;
-    }
-
-    if (username) {
-      employee.username = username;
-    }
-
-    if (imgSrc) {
-      employee.imgSrc = imgSrc;
-    }
-
-    if (description !== undefined) {
-      employee.description = description;
-    }
-
-    employee.updatedAt = getCurrentTime();
-    await employee.save();
-
-    res.status(200).json({ message: "อัปเดตข้อมูลสำเร็จ", employee });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปเดตข้อมูล", error });
+    const employee = await getEmployeeId(id);
+    res.status(200).json(employee);
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการดึงข้อมูลช่าง', error: error.message });
   }
 };
 
-// ฟังก์ชันสำหรับเปลี่ยนรหัสผ่าน
-export const changePassword = async (req: Request, res: Response) => {
+// อัปเดตช่าง (ชื่อ, อีเมล, รูปโปรไฟล์)
+export const updateReponseEmployeeInfo = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { username, email, imgSrc } = req.body;
+
+  try {
+    const updatedEmployee = await updateEmployeeInfo(id, username, email, imgSrc);
+    res.status(200).json({ message: 'อัปเดตข้อมูลช่างสำเร็จ!', updatedEmployee });
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตข้อมูลช่าง', error: error.message });
+  }
+};
+
+// อัปเดตสถานะว่าง/ไม่ว่างของช่าง
+export const updateResponseEmployeeStatus = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const updatedEmployee = await updateEmployeeStatus(id, status);
+    res.status(200).json({ message: 'อัปเดตสถานะสำเร็จ!', updatedEmployee });
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการอัปเดตสถานะช่าง', error: error.message });
+  }
+};
+
+// เปลี่ยนรหัสผ่านของช่าง
+export const updateResponsePassword = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { password } = req.body;
 
   try {
-    const employee = await Employee.findById(id);
+    const updatedEmployee = await changePassword(id, password);
+    res.status(200).json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ!', updatedEmployee });
+  } catch (error: any) {
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน', error: error.message });
+  }
+};
 
-    if (!employee) {
-      return res.status(404).json({ message: "ไม่พบข้อมูลช่าง" });
-    }
+// ลบช่างตาม ID
+export const deleteReponseEmployee = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    employee.password = password;
-    employee.updatedAt = getCurrentTime();
-
-    await employee.save();
-
-    res.status(200).json({ message: "เปลี่ยนรหัสผ่านสำเร็จ" });
+  try {
+    await deleteEmployee(id);
+    res.status(200).json({ message: 'ลบช่างสำเร็จ!' });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน", error });
+    res.status(500).json({ message: 'เกิดข้อผิดพลาดในการลบช่าง', error });
   }
 };

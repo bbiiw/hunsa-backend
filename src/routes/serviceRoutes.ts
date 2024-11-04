@@ -1,18 +1,13 @@
-import { Router } from "express";
-import {
-  createService,
-  getAllServices,
-  getServiceById,
-  updateService,
-  deleteService,
-} from "../controllers/ServiceController";
+import { Router } from 'express';
+import { createResponseService, deleteReponseService, getReponseAllServices, getResponseServiceId, updateResponseService } from '../controllers/ServiceController';
+
 
 const router = Router();
 
-router.post("/create", createService);
-router.get("/", getAllServices);
-router.get("/:id", getServiceById);
-router.put("/edit/:id", updateService);
-router.delete("/:id", deleteService);
+router.post('/create', createResponseService);
+router.get('/', getReponseAllServices);
+router.get('/:id', getResponseServiceId);
+router.put('/:id/edit', updateResponseService);
+router.delete('/:id', deleteReponseService);
 
 export default router;
